@@ -17,8 +17,8 @@ import xlrd
 def crawling_recent_trade(read_data, month_select_op):
         
     options = Options()
-    #options.headless = True
-    options.headless = False
+    options.headless = True
+    #options.headless = False
     browser = webdriver.Chrome(executable_path="./chromedriver.exe", options=options)
 
     #print(read_data)
@@ -36,6 +36,7 @@ def crawling_recent_trade(read_data, month_select_op):
 
     crawling_list = []
     wait = WebDriverWait(browser, 40)
+    error_list = []
 
     for n in range(len(read_data)):
 
@@ -71,85 +72,113 @@ def crawling_recent_trade(read_data, month_select_op):
 
         #time.sleep(10)
 
-        '''
-        ## Scroll DOWN
-        try:
-            browser.find_element_by_css_selector("#mySheet1 > tbody > tr:nth-child(2) > td:nth-child(2) > div > div").click()
-        #    actions = ActionChains(browser)
-        #    for i in range(3):
-        #        actions.send_keys(Keys.PAGE_DOWN).perform()
-        #        time.sleep(0.5)
-        except:
-            print("Scroll Bar error")
-        '''
-
         print("Expand Recent")
 
-        wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#mySheet1 > tbody > tr:nth-child(3) > td > div > div.GMPageOne > table > tbody > tr:nth-child(2) > td.GMClassReadOnly.GMCell.GMNoRight.GMEmpty.GME.IBSheetFont0')))
-        time.sleep(1)
+        try:
 
-        #try:
-        browser.find_element_by_css_selector("#mySheet1 > tbody > tr:nth-child(3) > td > div > div.GMPageOne > table > tbody > tr:nth-child(2) > td.GMClassReadOnly.GMCell.GMNoRight.GMEmpty.GME.IBSheetFont0").click()
-        #except:
-        
-        time.sleep(1)
-        #browser.implicitly_wait(20)
-        wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#mySheet1 > tbody > tr:nth-child(3) > td > div > div.GMPageOne > table > tbody > tr:nth-child(3) > td > table > tbody > tr:nth-child(2) > td.GMClassReadOnly.GMWrap0.GMAlignLeft.GMText.GMCell.IBSheetFont0.GMNoLeft.HideCol0C1')))                                                               
-                    
-        html = browser.page_source
-        soup = BeautifulSoup(html, 'html.parser', from_encoding='utf-8')
-        #print(soup)
-        trs = soup.find_all('tr', {"class":"GMDataRow"})
-        #for tr in trs:
-        #    print(tr.text)
+            wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#mySheet1 > tbody > tr:nth-child(3) > td > div > div.GMPageOne > table > tbody > tr:nth-child(2) > td.GMClassReadOnly.GMCell.GMNoRight.GMEmpty.GME.IBSheetFont0')))
+            time.sleep(0.5)
 
-        # len 17
-        # ['', '\xa0', '2020년', '36,631,568', '1,934.1', '21,961,664', '169.9', '0', '0.0', '32,455,714', '-11.0', '239,694,362', '-4.8', '0', '0.0', '4,175,854', '2020']
-        recent_tr_list = []
+            #try:
+            browser.find_element_by_css_selector("#mySheet1 > tbody > tr:nth-child(3) > td > div > div.GMPageOne > table > tbody > tr:nth-child(2) > td.GMClassReadOnly.GMCell.GMNoRight.GMEmpty.GME.IBSheetFont0").click()
+            #except:
+            
+            time.sleep(0.5)
+            #browser.implicitly_wait(20)
+            wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#mySheet1 > tbody > tr:nth-child(3) > td > div > div.GMPageOne > table > tbody > tr:nth-child(3) > td > table > tbody > tr:nth-child(2) > td.GMClassReadOnly.GMWrap0.GMAlignLeft.GMText.GMCell.IBSheetFont0.GMNoLeft.HideCol0C1')))                                                               
+                        
+            html = browser.page_source
+            soup = BeautifulSoup(html, 'html.parser', from_encoding='utf-8')
+            #print(soup)
+            trs = soup.find_all('tr', {"class":"GMDataRow"})
+            #for tr in trs:
+            #    print(tr.text)
 
-        idx_recent_tr = 0
-        for k in range(1, len(trs)):
-            tds = trs[k].find_all('td')
-            if tds[2].text.find("년") == -1:
-                idx_recent_tr = k
-                print("idx : ", idx_recent_tr, tds[2].text)
+            # len 17
+            # ['', '\xa0', '2020년', '36,631,568', '1,934.1', '21,961,664', '169.9', '0', '0.0', '32,455,714', '-11.0', '239,694,362', '-4.8', '0', '0.0', '4,175,854', '2020']
+            recent_tr_list = []
 
-        tds = trs[idx_recent_tr].find_all('td')
-        td_list = []
+            idx_recent_tr = 0
+            for k in range(1, len(trs)):
+                tds = trs[k].find_all('td')
+                if tds[2].text.find("년") == -1:
+                    idx_recent_tr = k
+                    #print("idx : ", idx_recent_tr, tds[2].text)
 
-        #년월           td[2]
-        #수출 금액      td[3]
-        #수출 증감률    td[4]
-        #수출 중량      td[5]
-        #수출 증감률    td[6]
-        #수입 금액      td[9]
-        #수입 증감률    td[10]
-        #수입 중량      td[11]
-        #수입 증감률    td[12]
-        #수지           td[15]
+            tds = trs[idx_recent_tr].find_all('td')
+            tds_next = trs[idx_recent_tr-1].find_all('td')
+            td_list = []
 
-        str_year = "2020년"
+            #년월           td[2]
+            #수출 금액      td[3]
+            #수출 증감률    td[4]
+            #수출 중량      td[5]
+            #수출 증감률    td[6]
+            #수출 금액 MoM  td[7]
+            #수출 중량 MoM  td[8]
+            #수입 금액      td[9]
+            #수입 증감률    td[10]
+            #수입 중량      td[11]
+            #수입 증감률    td[12]
+            #수입 금액 MoM  td[13]
+            #수입 중량 MoM  td[14]
+            #수지           td[15]
 
-        for k in range(len(tds)):
-            if k==2:
-                if tds[k].text.find("년") == -1:
-                    #print(tds[k].text)
-                    td_list.append(str_year + tds[k].text)            
+            str_year = "2020년"
+
+            for k in range(len(tds)):
+                if k==2:
+                    if tds[k].text.find("년") == -1:
+                        #print(tds[k].text)
+                        td_list.append(str_year + tds[k].text)            
+                    else:
+                        str_year = tds[k].text
+                        td_list.append(tds[k].text)
+                elif k==4 or k==6 or k==10 or k==12:
+                    td_list.append(float(tds[k].text.replace(',','')))
+                elif k==3 or k==5 or k==9 or k==11 or k==15:
+                    td_list.append(int(tds[k].text.replace(',','')))
+                elif k==7:
+                    #print(int(tds[3].text.replace(',','')), int(tds_next[3].text.replace(',','')))
+                    if int(tds_next[3].text.replace(',','')) == 0:
+                        td_list.append(0.0)
+                    else:
+                        mom = (int(tds[3].text.replace(',',''))-int(tds_next[3].text.replace(',','')))/float(tds_next[3].text.replace(',',''))*100
+                        td_list.append(float(mom))
+                elif k==8:
+                    #print(int(tds[5].text.replace(',','')), int(tds_next[5].text.replace(',','')))
+                    if int(tds_next[5].text.replace(',','')) == 0:
+                        td_list.append(0.0)
+                    else:
+                        mom = (int(tds[5].text.replace(',',''))-int(tds_next[5].text.replace(',','')))/float(tds_next[5].text.replace(',',''))*100
+                        td_list.append(float(mom))
+                elif k==13:
+                    if int(tds_next[9].text.replace(',','')) == 0:
+                        td_list.append(0.0)
+                    else:
+                        mom = (int(tds[9].text.replace(',',''))-int(tds_next[9].text.replace(',','')))/float(tds_next[9].text.replace(',',''))*100
+                        td_list.append(float(mom))
+                elif k==14:
+                    if int(tds_next[11].text.replace(',','')) == 0:
+                        td_list.append(0.0)
+                    else:
+                        mom = (int(tds[11].text.replace(',',''))-int(tds_next[11].text.replace(',','')))/float(tds_next[11].text.replace(',',''))*100
+                        td_list.append(float(mom))
                 else:
-                    str_year = tds[k].text
                     td_list.append(tds[k].text)
-            elif k==4 or k==6 or k==10 or k==12:
-                td_list.append(float(tds[k].text.replace(',','')))
-            elif k==3 or k==5 or k==9 or k==11 or k==15:
-                td_list.append(int(tds[k].text.replace(',','')))
-            else:
-                td_list.append(tds[k].text)
 
-        recent_tr_list.append(td_list)
+            recent_tr_list.append(td_list)
 
-        crawling_list.append(recent_tr_list)   
+            crawling_list.append(recent_tr_list)   
+
+        except:
+            recent_tr_list = []
+            recent_tr_list.append([0,0,'0',0,0,0,0,0,0,0,0,0,0,0,0,0])
+            crawling_list.append(recent_tr_list)
+            error_list.append([prod_code, item_value])
         
     browser.close()
+    print(error_list)
 
     return crawling_list
 
@@ -399,8 +428,8 @@ def crawling_all_trade(read_data, month_select_op):
 
 def write_excel_file(read_data, result_list, recent_op):
 
-    #workbook_name = "trade_test.xlsx"
-    workbook_name = "trade_test_example.xlsx"
+    workbook_name = "trade_test.xlsx"
+    #workbook_name = "trade_test_example.xlsx"
     workbook = xlsxwriter.Workbook(workbook_name)
 
     filter_format = workbook.add_format({'bold':True, 'fg_color': '#D7E4BC'	})
@@ -431,39 +460,59 @@ def write_excel_file(read_data, result_list, recent_op):
             prod_name = read_data[n][1]
             item_value = read_data[n][2]
             item_name = read_data[n][3]
+            corp_name = read_data[n][4]
 
             worksheet0.write(1, 1, "년월", filter_format3)
             worksheet0.write(0, 2, "수출", filter_format3)
             worksheet0.write(1, 2, "금액", filter_format3)
-            worksheet0.write(1, 3, "증감률", filter_format3)
-            worksheet0.write(1, 4, "중량", filter_format3)
-            worksheet0.write(1, 5, "증감률", filter_format3)
-            worksheet0.write(0, 6, "수입", filter_format3)
-            worksheet0.write(1, 6, "금액", filter_format3)
-            worksheet0.write(1, 7, "증감률", filter_format3)
-            worksheet0.write(1, 8, "중량", filter_format3)
-            worksheet0.write(1, 9, "증감률", filter_format3)
-            worksheet0.write(1, 10, "수지", filter_format3)
+            worksheet0.write(1, 3, "증감률(YoY)", filter_format3)
+            worksheet0.write(1, 4, "증감률(MoM)", filter_format3)
+            worksheet0.write(1, 5, "중량", filter_format3)
+            worksheet0.write(1, 6, "증감률(YoY)", filter_format3)
+            worksheet0.write(1, 7, "증감률(MoM)", filter_format3)
+            worksheet0.write(0, 8, "수입", filter_format3)
+            worksheet0.write(1, 8, "금액", filter_format3)
+            worksheet0.write(1, 9, "증감률(YoY)", filter_format3)
+            worksheet0.write(1, 10, "증감률(YoY)", filter_format3)
+            worksheet0.write(1, 11, "중량", filter_format3)
+            worksheet0.write(1, 12, "증감률(YoY)", filter_format3)
+            worksheet0.write(1, 13, "증감률(YoY)", filter_format3)
+            worksheet0.write(1, 14, "수지", filter_format3)
+            worksheet0.write(1, 15, "관련회사", filter_format3)
+            worksheet0.write(1, 16, "품목", filter_format3)
 
             offset = 2
-
+            
             for i in range(len(result_sheet)):
+                #print(i)
+                #print("result_sheet", result_sheet)
+                #print(result_sheet[i])
                 # 분류
                 worksheet0.write(n+offset, 0, str(prod_code) + " " + str(prod_name) + " " + str(item_value), filter_format)
                 # 년월
+                #print(result_sheet[i][2])
                 worksheet0.write(n+offset,1, result_sheet[i][2], filter_format3)
                 # 수출
                 worksheet0.write(n+offset,2, result_sheet[i][3], num2_format)
                 worksheet0.write(n+offset,3, result_sheet[i][4], num_format)
-                worksheet0.write(n+offset,4, result_sheet[i][5], num2_format)
-                worksheet0.write(n+offset,5, result_sheet[i][6], num_format)
+                worksheet0.write(n+offset,4, result_sheet[i][7], num_format)
+                worksheet0.write(n+offset,5, result_sheet[i][5], num2_format)
+                worksheet0.write(n+offset,6, result_sheet[i][6], num_format)
+                worksheet0.write(n+offset,7, result_sheet[i][8], num_format)
                 # 수입
-                worksheet0.write(n+offset,6, result_sheet[i][9], num2_format)
-                worksheet0.write(n+offset,7, result_sheet[i][10], num_format)
-                worksheet0.write(n+offset,8, result_sheet[i][11], num2_format)
-                worksheet0.write(n+offset,9, result_sheet[i][12], num_format)
+                worksheet0.write(n+offset,8, result_sheet[i][9], num2_format)
+                worksheet0.write(n+offset,9, result_sheet[i][10], num_format)
+                worksheet0.write(n+offset,10, result_sheet[i][13], num_format)
+                worksheet0.write(n+offset,11, result_sheet[i][11], num2_format)
+                worksheet0.write(n+offset,12, result_sheet[i][12], num_format)
+                worksheet0.write(n+offset,13, result_sheet[i][14], num_format)
                 # 수지
-                worksheet0.write(n+offset,10, result_sheet[i][15], num2_format)
+                worksheet0.write(n+offset,14, result_sheet[i][15], num2_format)
+                #관련회사
+                worksheet0.write(n+offset,15, str(corp_name), filter_format3)
+                #품목
+                worksheet0.write(n+offset,16, str(item_name), filter_format3)
+
 
     else:
         for n in range(len(result_list)):
@@ -472,6 +521,7 @@ def write_excel_file(read_data, result_list, recent_op):
             prod_name = read_data[n][1]
             item_value = read_data[n][2]
             item_name = read_data[n][3]
+            corp_name = read_data[n][4]
 
             worksheet_name = str(prod_name).replace(' ','') + "_" + str(item_value).replace(' ','')
             worksheet0 = workbook.add_worksheet(worksheet_name)
@@ -489,7 +539,7 @@ def write_excel_file(read_data, result_list, recent_op):
             #수입 증감률    td[12]
             #수지           td[15]
 
-            worksheet0.write(0, 0, str(prod_code) + " " + str(prod_name) + " " + str(item_value) + " " + item_name, filter_format)
+            worksheet0.write(0, 0, str(prod_code) + " " + str(prod_name) + " " + str(item_value) + " " + item_name + " " + corp_name, filter_format)
             worksheet0.set_column(0,0,20)
 
             worksheet0.write(2, 0, "년월", filter_format3)
@@ -677,11 +727,13 @@ def read_req_excel_file(input_file):
     for i in range(num_req):
         region_code = int(sheet1.cell(i+2,0).value)
         region_name = sheet1.cell(i+2,1).value
-        item_code = int(sheet1.cell(i+2,2).value)
+        #item_code = int(sheet1.cell(i+2,2).value)
+        item_code = sheet1.cell(i+2,2).value
         item_name = sheet1.cell(i+2,3).value
+        corp_name = sheet1.cell(i+2,4).value
 
         print(region_code, region_name, item_code)
-        read_data.append([region_code, region_name, item_code, item_name])
+        read_data.append([region_code, region_name, item_code, item_name, corp_name])
        
     return read_data
 
@@ -691,11 +743,11 @@ def main():
     # Adding Graph in Excel Files....
 
     # Options...
-    recent_op = 0
+    recent_op = 1
     month_select_op = 1
 
-    #input_file = "req_trade.xlsx"
-    input_file = "req_trade_example.xlsx"
+    input_file = "req_trade.xlsx"
+    #input_file = "req_trade_example.xlsx"
 
     read_data = read_req_excel_file(input_file)
 
