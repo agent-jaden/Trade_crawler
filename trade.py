@@ -13,6 +13,13 @@ from bs4 import BeautifulSoup
 import xlsxwriter
 import xlrd
 
+def excel_column_name(n):
+    """Number to Excel-style column name, e.g., 1 = A, 26 = Z, 27 = AA, 703 = AAA."""
+    name = ''
+    while n > 0:
+        n, r = divmod (n - 1, 26)
+        name = chr(r + ord('A')) + name
+    return name
 
 def crawling_recent_trade(read_data, month_select_op):
         
@@ -528,9 +535,9 @@ def write_excel_file(read_data, result_list, recent_op, view_graph_op):
             offset = 3
 
             dec_list_len = len(graph_dec_list)
-            char_dec = chr(65+dec_list_len)
+            #char_dec = chr(65+dec_list_len)
             inc_list_len = len(graph_inc_list)
-            char_inc = chr(65+inc_list_len)
+            #char_inc = chr(65+inc_list_len)
 
             print(len(graph_dec_list))
             print(len(graph_inc_list))
@@ -562,14 +569,14 @@ def write_excel_file(read_data, result_list, recent_op, view_graph_op):
 
             bar_chart1.add_series({
                 'name': '증감률(YoY)',
-                'categories': 'Graph!$B$4:$' + char_inc + '$4',
-                'values': 'Graph!$B$6:$' + char_inc + '$6',
+                'categories': 'Graph!$B$4:$' + excel_column_name(inc_list_len+1) + '$4',
+                'values': 'Graph!$B$6:$' + excel_column_name(inc_list_len+1) + '$6',
                 #'y2_axis': True,
             })
             bar_chart1.add_series({
                 'name': '증감률(MoM)',
-                'categories': 'Graph!$B$4:$' + char_inc + '$4',
-                'values': 'Graph!$B$7:$' + char_inc + '$7',
+                'categories': 'Graph!$B$4:$' + excel_column_name(inc_list_len+1) + '$4',
+                'values': 'Graph!$B$7:$' + excel_column_name(inc_list_len+1) + '$7',
                 #'y2_axis': True,
             })
 
@@ -585,14 +592,14 @@ def write_excel_file(read_data, result_list, recent_op, view_graph_op):
             bar_chart2 = workbook.add_chart({'type':'column'})
             bar_chart2.add_series({
                 'name': '증감률(YoY)',
-                'categories': 'Graph!$B$9:$' + char_dec + '$9',
-                'values': 'Graph!$B$11:$' + char_dec + '$11',
+                'categories': 'Graph!$B$9:$' + excel_column_name(dec_list_len) + '$9',
+                'values': 'Graph!$B$11:$' + excel_column_name(dec_list_len) + '$11',
                 #'y2_axis': True,
             })
             bar_chart2.add_series({
                 'name': '증감률(MoM)',
-                'categories': 'Graph!$B$9:$' + char_dec + '$9',
-                'values': 'Graph!$B$12:$' + char_dec + '$12',
+                'categories': 'Graph!$B$9:$' + excel_column_name(dec_list_len) + '$9',
+                'values': 'Graph!$B$12:$' + excel_column_name(dec_list_len) + '$12',
                 #'y2_axis': True,
             })
 
