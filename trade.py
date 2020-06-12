@@ -426,7 +426,7 @@ def crawling_all_trade(read_data, month_select_op):
 
     return crawling_list
 
-def write_excel_file(read_data, result_list, recent_op):
+def write_excel_file(read_data, result_list, recent_op, view_graph_op):
 
     workbook_name = "trade_test.xlsx"
     #workbook_name = "trade_test_example.xlsx"
@@ -446,6 +446,9 @@ def write_excel_file(read_data, result_list, recent_op):
     num2_format.set_border()
     #num3_format = workbook.add_format({'num_format':'#,##0.00', 'fg_color':'#FCE4D6'})
 
+    graph_inc_list = []
+    graph_dec_list = []
+
     if recent_op == 1:
         
         worksheet_name ='최근월 수출입통계'
@@ -462,6 +465,7 @@ def write_excel_file(read_data, result_list, recent_op):
             item_name = read_data[n][3]
             corp_name = read_data[n][4]
 
+            worksheet0.write(1, 0, "품목", filter_format3)
             worksheet0.write(1, 1, "년월", filter_format3)
             worksheet0.write(0, 2, "수출", filter_format3)
             worksheet0.write(1, 2, "금액", filter_format3)
@@ -513,6 +517,93 @@ def write_excel_file(read_data, result_list, recent_op):
                 #품목
                 worksheet0.write(n+offset,16, str(item_name), filter_format3)
 
+                if result_sheet[i][4] > 20.0 and result_sheet[i][7] > 20.0 and result_sheet[i][3] > 10000:
+                    graph_inc_list.append([str(item_value), result_sheet[i][3], result_sheet[i][4], result_sheet[i][7]])
+                elif result_sheet[i][4] < -20.0 and result_sheet[i][7] < -20.0 and result_sheet[i][3] > 10000:
+                    graph_dec_list.append([str(item_value), result_sheet[i][3], result_sheet[i][4], result_sheet[i][7]])
+
+        if view_graph_op == 1:
+            
+            worksheet1 = workbook.add_worksheet("Graph")
+            offset = 3
+
+            dec_list_len = len(graph_dec_list)
+            char_dec = chr(65+dec_list_len)
+            inc_list_len = len(graph_inc_list)
+            char_inc = chr(65+inc_list_len)
+
+            print(len(graph_dec_list))
+            print(len(graph_inc_list))
+
+            worksheet1.write(offset, 0, "품목", filter_format3)
+            worksheet1.write(offset+1, 0, "금액", filter_format3)
+            worksheet1.write(offset+2, 0, "증감률(YoY)", filter_format3)
+            worksheet1.write(offset+3, 0, "증감률(MoM)", filter_format3)
+
+            worksheet1.write(offset+5, 0, "품목", filter_format3)
+            worksheet1.write(offset+6, 0, "금액", filter_format3)
+            worksheet1.write(offset+7, 0, "증감률(YoY)", filter_format3)
+            worksheet1.write(offset+8, 0, "증감률(MoM)", filter_format3)
+
+            for k in range(len(graph_inc_list)):
+                worksheet1.write(offset,k+1, graph_inc_list[k][0])
+                worksheet1.write(offset+1,k+1, graph_inc_list[k][1])
+                worksheet1.write(offset+2,k+1, graph_inc_list[k][2])
+                worksheet1.write(offset+3,k+1, graph_inc_list[k][3])
+
+            for k in range(len(graph_dec_list)):
+                worksheet1.write(offset+5,k+1, graph_dec_list[k][0])
+                worksheet1.write(offset+6,k+1, graph_dec_list[k][1])
+                worksheet1.write(offset+7,k+1, graph_dec_list[k][2])
+                worksheet1.write(offset+8,k+1, graph_dec_list[k][3])
+
+            #bar_chart1 = workbook.add_chart({'type':'bar', 'subtype':'stacked'})
+            bar_chart1 = workbook.add_chart({'type':'column'})
+
+            bar_chart1.add_series({
+                'name': '증감률(YoY)',
+                'categories': 'Graph!$B$4:$' + char_inc + '$4',
+                'values': 'Graph!$B$6:$' + char_inc + '$6',
+                #'y2_axis': True,
+            })
+            bar_chart1.add_series({
+                'name': '증감률(MoM)',
+                'categories': 'Graph!$B$4:$' + char_inc + '$4',
+                'values': 'Graph!$B$7:$' + char_inc + '$7',
+                #'y2_axis': True,
+            })
+
+            bar_chart1.set_size({'width':600, 'height':400})
+            bar_chart1.set_title({'name':'수출 증가'})
+            bar_chart1.set_x_axis({'name': '품목'})
+            bar_chart1.set_y_axis({'name':'%'})
+            bar_chart1.set_legend({'position':'bottom'})
+
+            worksheet1.insert_chart('B16', bar_chart1)
+
+            #bar_chart2 = workbook.add_chart({'type':'bar', 'subtype':'stacked'})
+            bar_chart2 = workbook.add_chart({'type':'column'})
+            bar_chart2.add_series({
+                'name': '증감률(YoY)',
+                'categories': 'Graph!$B$9:$' + char_dec + '$9',
+                'values': 'Graph!$B$11:$' + char_dec + '$11',
+                #'y2_axis': True,
+            })
+            bar_chart2.add_series({
+                'name': '증감률(MoM)',
+                'categories': 'Graph!$B$9:$' + char_dec + '$9',
+                'values': 'Graph!$B$12:$' + char_dec + '$12',
+                #'y2_axis': True,
+            })
+
+            bar_chart2.set_size({'width':600, 'height':400})
+            bar_chart2.set_title({'name':'수출 감소'})
+            bar_chart2.set_x_axis({'name': '품목'})
+            bar_chart2.set_y_axis({'name':'%'})
+            bar_chart2.set_legend({'position':'bottom'})
+
+            worksheet1.insert_chart('L16', bar_chart2)
+            
 
     else:
         for n in range(len(result_list)):
@@ -745,6 +836,7 @@ def main():
     # Options...
     recent_op = 1
     month_select_op = 1
+    view_graph_op = 1
 
     input_file = "req_trade.xlsx"
     #input_file = "req_trade_example.xlsx"
@@ -758,7 +850,7 @@ def main():
 
     #print(result_list)
 
-    write_excel_file(read_data, result_list, recent_op)
+    write_excel_file(read_data, result_list, recent_op, view_graph_op)
 
 
 # Main
