@@ -592,14 +592,14 @@ def write_excel_file(read_data, result_list, recent_op, view_graph_op):
             bar_chart2 = workbook.add_chart({'type':'column'})
             bar_chart2.add_series({
                 'name': '증감률(YoY)',
-                'categories': 'Graph!$B$9:$' + excel_column_name(dec_list_len) + '$9',
-                'values': 'Graph!$B$11:$' + excel_column_name(dec_list_len) + '$11',
+                'categories': 'Graph!$B$9:$' + excel_column_name(dec_list_len+1) + '$9',
+                'values': 'Graph!$B$11:$' + excel_column_name(dec_list_len+1) + '$11',
                 #'y2_axis': True,
             })
             bar_chart2.add_series({
                 'name': '증감률(MoM)',
-                'categories': 'Graph!$B$9:$' + excel_column_name(dec_list_len) + '$9',
-                'values': 'Graph!$B$12:$' + excel_column_name(dec_list_len) + '$12',
+                'categories': 'Graph!$B$9:$' + excel_column_name(dec_list_len+1) + '$9',
+                'values': 'Graph!$B$12:$' + excel_column_name(dec_list_len+1) + '$12',
                 #'y2_axis': True,
             })
 
