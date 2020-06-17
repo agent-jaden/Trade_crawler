@@ -826,7 +826,7 @@ def read_req_excel_file(input_file):
         region_code = int(sheet1.cell(i+2,0).value)
         region_name = sheet1.cell(i+2,1).value
         #item_code = int(sheet1.cell(i+2,2).value)
-        item_code = sheet1.cell(i+2,2).value
+        item_code = str(sheet1.cell(i+2,2).value)
         item_name = sheet1.cell(i+2,3).value
         corp_name = sheet1.cell(i+2,4).value
 
